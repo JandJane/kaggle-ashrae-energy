@@ -12,7 +12,7 @@ METERS = [3]
 FIRST = [True, False]
 PREPARE_DATA = False
 
-
+# TODO have all this in a separate utils file
 # Function to reduce the DF size
 def reduce_mem_usage(df, verbose=True):
     numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
@@ -170,7 +170,7 @@ class Preprocessor:
             self.train_idx = self.train_test_split()
         self.test_idx = \
             self.df[np.logical_and(~pd.isna(self.df.meter_reading), ~self.df.index.isin(self.train_idx))].index
-        self.prod_idx = self.df[pd.isna(self.df.meter_reading)]
+        self.prod_idx = self.df[pd.isna(self.df.meter_reading)].index
 
         self.df = self.create_mean_target()
         self.df = self.transform_target()

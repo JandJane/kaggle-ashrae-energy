@@ -82,13 +82,15 @@ class Scaler:
 
     def create_scalers(self):
         self.scaler_features.fit(self.df.loc[self.train_idx, columns_config['numerical']])
-        self.scaler_labels.fit(self.df.loc[self.train_idx, 'meter_reading'].values.reshape(-1, 1))
+        self.scaler_labels.fit(self.df.loc[self.train_idx, 'meter_reading'].values.reshape(-1, 1).astype(np.float))
         self.encoder.fit(self.df.loc[self.train_idx, columns_config['categorical']])
 
     def transform(self, data):
         num_features = self.scaler_features.transform(data[columns_config['numerical']])
-        labels = self.scaler_labels.transform(data.loc[:, 'meter_reading'].values.reshape(-1, 1))
+        labels = self.scaler_labels.transform(data.loc[:, 'meter_reading'].values.reshape(-1, 1).astype(np.float))
         cat_features = self.encoder.transform(data[columns_config['categorical']])
+        print('NaNs in scaled arrays:', np.isnan(labels).sum(), np.isnan(num_features).sum(),
+              np.isnan(cat_features.todense()).sum())
         return cat_features, num_features, labels
 
     @staticmethod
@@ -178,15 +180,12 @@ class NetTrainer(Trainer):
         self.net.eval()
         for i in range(0, test_df.shape[0], batch_size):
             cat_test, num_test, labels_test = self.scaler.transform(test_df[i: min(i + batch_size, test_df.shape[0])])
-            inputs = torch.FloatTensor(np.concatenate([cat_test, num_test], axis=1)).to(device)
-            print(inputs)
+            inputs = torch.FloatTensor(np.concatenate([cat_test.todense(), num_test], axis=1)).to(device)
             row_ids = test_df.row_id[i: min(i + batch_size, test_df.shape[0])]
             with torch.no_grad():
                 outputs = self.net(inputs)
-            print(outputs)
             pred_raw = self.scaler_labels.inverse_transform(outputs.detach().cpu().numpy())
             pred_raw = np.exp(pred_raw) - 1
-            print(pred_raw)
             submission = np.concatenate([submission,
                                          np.concatenate([row_ids.values.reshape(-1, 1), pred_raw], axis=1)
                                          ], axis=0)

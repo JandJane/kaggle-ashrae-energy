@@ -23,7 +23,7 @@ if __name__ == '__main__':
             scaler = Scaler(preprocessor, from_state=True, state_path=SCALER)
         else:
             scaler = Scaler(preprocessor)
-            scaler.dump_state('models/scaler_%s.pkl' % PREPROCESSOR[20:])
+            # scaler.dump_state('models/scaler_%s.pkl' % PREPROCESSOR[20:])
         init_config['scaler'] = scaler
         trainer = NetTrainer(**init_config)
 
@@ -34,8 +34,6 @@ if __name__ == '__main__':
 
     model_name = '%s_%s_%s' % (MODEL_TYPE, PREPROCESSOR[20:], datetime.today().strftime('%Y-%m-%d-%H-%M'))
     trainer.save_model('models/%s.pth' % model_name)
-    with open('models/%s_config.txt', 'w+') as f:  # TODO just rewrite all these ugly 'with' constructions
+    with open('models/%s_config.txt' % model_name, 'w+') as f:  # TODO just rewrite all these ugly 'with' constructions
         f.write(str({**init_config, **train_config}))
         f.close()
-    # with open('models/trainer_%s.pkl' % model_name, 'wb') as f:
-    #     pickle.dump(trainer, f)
