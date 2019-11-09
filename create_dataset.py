@@ -108,7 +108,7 @@ def fill_infs(df):
 
 
 def create_wind_cat(df):
-    # TODO deal with 360 = 0
+    df.loc[df.wind_direction == 360, 'wind_direction'] = 0
     df['wind_direction_cat'] = df['wind_direction'] // 45
     return df
 

@@ -1,7 +1,10 @@
+import os
 import pickle
 import pandas as pd
 import numpy as np
 from datetime import datetime
+
+from config import DIR
 
 # TODO train a separate model for ensembling
 
@@ -15,7 +18,7 @@ if __name__ == '__main__':
     for preds in PREDS:
         to_ensemble = []
         for pred in preds:
-            x = pickle.load(pred)
+            x = pickle.load(os.path.join(DIR, pred))
             to_ensemble.append(x)
         # TODO assert all the vectors have the same height
         ensembled = to_ensemble[0]
@@ -35,8 +38,8 @@ if __name__ == '__main__':
     print('Indices in resulting prediction %d, of which unique indices %d' % (len(df), len(df.index.unique())))
     print('Number of NaNs:', len(df[df.meter_reading.isna()]))
 
-    baseline = pd.read_csv('results/baseline.csv')
+    baseline = pd.read_csv(os.path.join(DIR, 'results/baseline.csv'))
     baseline.loc[df.index, 'meter_reading'] = df.meter_reading
     baseline.index = baseline.row_id
     baseline = baseline.drop(columns='row_id')
-    baseline.to_csv('results/submission_%s.csv' % datetime.today().strftime('%Y-%m-%d-%H-%M'))
+    baseline.to_csv(os.path.join(DIR, 'results/submission_%s.csv' % datetime.today().strftime('%Y-%m-%d-%H-%M')))

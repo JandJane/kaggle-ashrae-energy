@@ -8,10 +8,8 @@ import torch.optim as optim
 from matplotlib import pyplot as plt
 import pickle
 
-from config import columns_config
+from config import columns_config, device
 from trainer import Trainer
-
-device = 'cpu'
 
 
 class Net(nn.Module):
@@ -40,9 +38,6 @@ class Scaler:
     def __init__(self, preprocessor, batch_size=1024, from_state=False, state_path=None):
         self.df = preprocessor.df
         self.train_idx = preprocessor.train_idx
-
-        self.df.wind_direction_cat = self.df.wind_direction_cat.fillna(0)  # TODO delete this once datasets are regenerated
-        self.df.wind_direction = self.df.wind_direction.fillna(0)
 
         if from_state:
             state = pickle.load(state_path)

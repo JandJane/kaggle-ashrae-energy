@@ -11,6 +11,8 @@ device = 'cuda:0'
 
 EPS = 10 ** -6
 
+DIR = '/data1/trufanova/energy'
+
 
 columns_config = {
     'numerical': ['square_feet', 'year_built', 'floor_count', 'air_temperature', 'cloud_coverage', 'dew_temperature',
