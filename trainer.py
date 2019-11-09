@@ -6,7 +6,7 @@ class Trainer:
     def train(self, verbose=True, do_val=True, *args, **kwargs):
         pass
 
-    def plot(self):
+    def plot(self, pic_name):
         pass
 
     def predict(self, test_df, submission, batch_size=100000):

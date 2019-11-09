@@ -7,7 +7,7 @@ from create_dataset import *
 from nn import *
 
 MODEL_TYPE = 'nn'
-PREPROCESSOR = 'models/preprocessor_2_2'  # must be "models/preprocessor_%d_%d"
+PREPROCESSOR = 'models/preprocessor_0_2'  # must be "models/preprocessor_%d_%d"
 SCALER = None
 
 
@@ -30,9 +30,9 @@ if __name__ == '__main__':
     t0 = time.time()
     trainer.train(**train_config, verbose=True, do_val=True)
     print('Finished training. Train time %d seconds' % (time.time() - t0))
-    # trainer.plot()
 
     model_name = '%s_%s_%s' % (MODEL_TYPE, PREPROCESSOR[20:], datetime.today().strftime('%Y-%m-%d-%H-%M'))
+    trainer.plot(model_name)
     trainer.save_model('models/%s.pth' % model_name)
     with open('models/%s_config.txt' % model_name, 'w+') as f:  # TODO just rewrite all these ugly 'with' constructions
         f.write(str({**init_config, **train_config}))

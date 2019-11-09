@@ -191,12 +191,12 @@ class NetTrainer(Trainer):
                                          ], axis=0)
         return submission
 
-    def plot(self):  # TODO
+    def plot(self, pic_name):
         f, (ax1, ax2) = plt.subplots(2, 1, figsize=(20, 10))
         ax1.plot(self.train_losses, color='b')
         ax1.plot(self.test_losses, color='y')
         ax2.plot(self.metrics, color='y')
-        plt.show()
+        f.savefig('plots/%s.png' % pic_name)
 
     def save_model(self, path):
         torch.save(self.net, path)

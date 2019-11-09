@@ -8,8 +8,8 @@ warnings.filterwarnings("ignore")  # TODO filter warnings once
 from config import *
 
 
-METERS = [3]
-FIRST = [True, False]
+METERS = [0, 1, 2, 3]
+FIRST = [False]
 PREPARE_DATA = False
 
 # TODO have all this in a separate utils file
@@ -226,7 +226,7 @@ if __name__ == '__main__':
                 with open('models/train_indices_%d_first.pkl' % meter,'wb') as f:
                     pickle.dump(preprocessor.train_idx, f)
                 print('Saved %d train indices for meter %d part %d of dataset' %
-                      (len(preprocessor.train_idx), meter, int(first) + 1))
+                      (len(preprocessor.train_idx), meter, int(not first) + 1))
             else:
                 with open('models/train_indices_%d_first.pkl' % meter,'rb') as f:
                     x = pickle.load(f)

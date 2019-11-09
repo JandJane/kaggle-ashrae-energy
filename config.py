@@ -30,7 +30,7 @@ models_config = {
                 },
                 'lr': 0.001,
             },
-        'train_config': {'n_epochs': 1},
+        'train_config': {'n_epochs': 2},
     }
 }
 
