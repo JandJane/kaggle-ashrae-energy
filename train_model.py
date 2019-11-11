@@ -8,7 +8,7 @@ from create_dataset import *
 from nn import *
 
 MODEL_TYPE = 'nn'
-PREPROCESSORS = ['models/preprocessor_0_2']  # must be "models/preprocessor_%d_%d"
+PREPROCESSORS = ['models/preprocessor_0_1', 'models/preprocessor_0_2']  # must be "models/preprocessor_%d_%d"
 
 if __name__ == '__main__':
     for PREPROCESSOR in PREPROCESSORS:

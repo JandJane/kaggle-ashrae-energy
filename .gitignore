@@ -2,5 +2,6 @@
 data/*
 models/*
 results/*
+plots/*
 .idea
 __pycache__

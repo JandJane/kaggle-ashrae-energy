@@ -10,7 +10,10 @@ from config import DIR
 
 # predictions to ensemble
 PREDS = [
-    ('results/a.pkl', 'results/b.pkl'),
+    ('results/prediction_nn_0_1_2019-11-11-13-24.pth.pkl', 'results/prediction_nn_0_2_2019-11-11-13-43.pth.pkl'),
+    ('results/prediction_nn_1_1_2019-11-10-03-45.pth.pkl', 'results/prediction_nn_1_2_2019-11-10-03-59.pth.pkl'),
+    ('results/prediction_nn_2_1_2019-11-10-04-07.pth.pkl', 'results/prediction_nn_2_2_2019-11-10-04-16.pth.pkl'),
+    ('results/prediction_nn_3_1_2019-11-10-04-19.pth.pkl', 'results/prediction_nn_3_2_2019-11-10-04-23.pth.pkl')
 ]
 
 if __name__ == '__main__':
@@ -18,8 +21,9 @@ if __name__ == '__main__':
     for preds in PREDS:
         to_ensemble = []
         for pred in preds:
-            x = pickle.load(os.path.join(DIR, pred))
+            x = pickle.load(open(os.path.join(DIR, pred), 'rb'))
             to_ensemble.append(x)
+        print(np.all(to_ensemble[0][:, 0] == to_ensemble[1][:, 0]))
         # TODO assert all the vectors have the same height
         ensembled = to_ensemble[0]
         ensembled[:, 1] = np.mean(

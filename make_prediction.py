@@ -7,8 +7,8 @@ from nn import *
 from config import models_config, DIR
 from create_dataset import Preprocessor
 
-PREPROCESSORS = ['models/preprocessor_2_2']  # must be "models/preprocessor_%d_%d"
-MODELS = ['models/nn_2_2_2019-11-09-02-02.pth']
+PREPROCESSORS = ['models/preprocessor_0_1', 'models/preprocessor_0_2']  # must be "models/preprocessor_%d_%d"
+MODELS = ['models/nn_0_1_2019-11-11-13-24.pth', 'models/nn_0_2_2019-11-11-13-43.pth']
 MODEL_TYPE = 'nn'
 
 if __name__ == '__main__':
@@ -22,7 +22,7 @@ if __name__ == '__main__':
             scaler = Scaler(preprocessor)
             init_config['scaler'] = scaler
             trainer = NetTrainer(**init_config)
-            trainer.load_model(MODEL)
+            trainer.load_model(os.path.join(DIR, MODEL))
             submission = np.array([]).reshape(-1, 2)
             t0 = time.time()
             submission = trainer.predict(preprocessor.df.loc[preprocessor.prod_idx], submission)
