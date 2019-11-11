@@ -1,15 +1,14 @@
 import numpy as np
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.model_selection import LeaveOneGroupOut
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 import torch.nn as nn
 import torch.optim as optim
 from matplotlib import pyplot as plt
-import pickle
 
 from config import columns_config, device
-from trainer import Trainer
+from trainer import Trainer, CV
 
 
 class Net(nn.Module):
@@ -34,49 +33,22 @@ class Net(nn.Module):
         return x
 
 
-class Scaler:
-    def __init__(self, preprocessor, batch_size=1024, from_state=False, state_path=None):
+class Scaler(CV):
+    def __init__(self, preprocessor, batch_size=1024):
+        super(CV, self).__init__()
         self.df = preprocessor.df
         self.train_idx = preprocessor.train_idx
+        self.batch_size = batch_size
 
-        if from_state:
-            state = pickle.load(state_path)
-            self.scaler_labels = state['scaler_labels']
-            self.scaler_features = state['scaler_features']
-            self.encoder = state['encoder']
-            self.testloader = state['testloader']
-            self.trainloader = state['trainloader']
-            self.d_in = state['d_in']
-        else:
-            self.scaler_labels = StandardScaler()
-            self.scaler_features = StandardScaler()
-            self.encoder = OneHotEncoder(handle_unknown='ignore', sparse=True)
+        self.scaler_labels = StandardScaler()
+        self.scaler_features = StandardScaler()
+        self.encoder = OneHotEncoder(handle_unknown='ignore', sparse=True)
 
-            self.create_scalers()
-
-            cat_train, num_train, labels_train = self.transform(self.df.loc[preprocessor.train_idx])
-            cat_test, num_test, labels_test = self.transform(self.df.loc[preprocessor.test_idx])
-            self.d_in = cat_train.shape[1] + num_train.shape[1]
-
-            #         if prod:
-            #             self.testloader = torch.FloatTensor(np.concatenate([cat_test, num_test], axis=1)), self.df[~self.df.index.isin(self.train_idx)].row_id
-            #         else:
-            self.testloader = self.create_dataloader(cat_test, num_test, labels_test, batch_size)
-            self.trainloader = self.create_dataloader(cat_train, num_train, labels_train, batch_size)
-
-    def dump_state(self, path):
-        state = {
-            'scaler_labels': self.scaler_labels,
-            'scaler_features': self.scaler_features,
-            'encoder': self.encoder,
-            'testloader': self.testloader,
-            'trainloader': self.trainloader,
-            'd_in': self.d_in
-        }
-        pickle.dump(state, open(path, 'wb'))
+        self.create_scalers()
+        self.d_in = len(columns_config['numerical']) + sum(len(c) for c in self.encoder.categories_)
 
     def create_scalers(self):
-        self.scaler_features.fit(self.df.loc[self.train_idx, columns_config['numerical']])
+        self.scaler_features.fit(self.df[columns_config['numerical']])
         self.scaler_labels.fit(self.df.loc[self.train_idx, 'meter_reading'].values.reshape(-1, 1).astype(np.float))
         self.encoder.fit(self.df.loc[self.train_idx, columns_config['categorical']])
 
@@ -89,23 +61,32 @@ class Scaler:
         return cat_features, num_features, labels
 
     @staticmethod
-    def create_dataloader(cat, num, labels, batch_size, shuffle=True, add_row_ids=False, row_ids=None):
-        data = [cat.todense(), num]
-        if add_row_ids:
-            data.append(row_ids.astype(int))
-        dataset = TensorDataset(torch.Tensor(np.concatenate(data, 1)), torch.Tensor(labels))
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+    def create_tensors(cat, num, labels):
+        return torch.Tensor(np.concatenate([cat.todense(), num], 1)), torch.Tensor(labels)
+
+    def create_dataloader(self, X, y, shuffle=True):
+        dataset = TensorDataset(X, y)
+        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=shuffle)
         return dataloader
+
+    def iter_cv(self):
+        cat, num, labels = self.transform(self.df.loc[self.train_idx])
+
+        X, y = self.create_tensors(cat, num, labels)
+
+        logo = LeaveOneGroupOut()
+
+        for train_idx, test_idx in logo.split(X, y, self.df.loc[self.train_idx, 'cv_group']):
+            yield self.create_dataloader(X[train_idx], y[train_idx]), self.create_dataloader(X[test_idx], y[test_idx])
 
 
 class NetTrainer(Trainer):
-    def __init__(self, scaler=None, net_config=None, lr=0):
+    def __init__(self, trainloader, testloader, scaler=None, net_config=None, lr=0):
         super(Trainer, self).__init__()
 
         self.scaler = scaler
-        self.trainloader = scaler.trainloader
-        self.testloader = scaler.testloader
-        self.scaler_labels = scaler.scaler_labels
+        self.trainloader = trainloader
+        self.testloader = testloader
 
         self.optimizer = None
         self.criterion = None
@@ -127,8 +108,8 @@ class NetTrainer(Trainer):
         self.optimizer = optim.Adam(self.net.parameters(), lr=lr)
 
     def metric(self, pred, labels):
-        pred_raw = self.scaler_labels.inverse_transform(pred.detach().cpu().numpy())
-        labels_raw = self.scaler_labels.inverse_transform(labels.detach().cpu().numpy())
+        pred_raw = self.scaler.scaler_labels.inverse_transform(pred.detach().cpu().numpy())
+        labels_raw = self.scaler.scaler_labels.inverse_transform(labels.detach().cpu().numpy())
         loss = np.mean((pred_raw - labels_raw) ** 2) ** 0.5
         return loss
 
@@ -175,11 +156,12 @@ class NetTrainer(Trainer):
         self.net.eval()
         for i in range(0, test_df.shape[0], batch_size):
             cat_test, num_test, labels_test = self.scaler.transform(test_df[i: min(i + batch_size, test_df.shape[0])])
-            inputs = torch.FloatTensor(np.concatenate([cat_test.todense(), num_test], axis=1)).to(device)
+            inputs, _ = self.scaler.create_tensors(cat_test, num_test, labels_test)
+            inputs = inputs.to(device)
             row_ids = test_df.row_id[i: min(i + batch_size, test_df.shape[0])]
             with torch.no_grad():
                 outputs = self.net(inputs)
-            pred_raw = self.scaler_labels.inverse_transform(outputs.detach().cpu().numpy())
+            pred_raw = self.scaler.scaler_labels.inverse_transform(outputs.detach().cpu().numpy())
             pred_raw = np.exp(pred_raw) - 1
             submission = np.concatenate([submission,
                                          np.concatenate([row_ids.values.reshape(-1, 1), pred_raw], axis=1)

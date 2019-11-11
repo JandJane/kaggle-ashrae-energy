@@ -1,3 +1,12 @@
+# Abstract CV class for all model types
+class CV:
+    def __init__(self):
+        pass
+
+    def iter_cv(self):
+        pass
+
+
 # Abstract class for all model types
 class Trainer:
     def __init__(self):
