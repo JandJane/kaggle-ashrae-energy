@@ -2,9 +2,10 @@ import pickle
 import pandas as pd
 import time
 import warnings
+from data_preprocessing_utils import *
+
 warnings.filterwarnings("ignore")  # TODO filter warnings once
 
-from data_preprocessing_utils import *
 
 METERS = [1, 2, 3]
 N_FOLDS = 5

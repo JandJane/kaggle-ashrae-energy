@@ -4,12 +4,13 @@ import time
 import numpy as np
 
 from nn import *
+from boosting import *
 from config import models_config, DIR
 from data_preprocessing_utils import Preprocessor
 
 PREPROCESSORS = ['models/preprocessor_3']  # must be "models/preprocessor_%d_%d"
-MODELS = ['models/nn_3_0_2019-11-12-00-25.pth', 'models/nn_3_1_2019-11-12-00-26.pth']
-MODEL_TYPE = 'nn'
+MODELS = ['models/cb_3_0_2019-11-13-00-09.pth']
+MODEL_TYPE = 'cb'
 
 if __name__ == '__main__':
     for MODEL, PREPROCESSOR in zip(MODELS, PREPROCESSORS):
@@ -23,6 +24,8 @@ if __name__ == '__main__':
             scaler = Scaler(preprocessor)
             init_config['scaler'] = scaler
             TrainerClass = NetTrainer
+        elif MODEL_TYPE == 'cb':
+            TrainerClass = CatBoostTrainer
 
         trainer = TrainerClass(None, None, **init_config)
         trainer.load_model(os.path.join(DIR, MODEL))

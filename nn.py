@@ -35,7 +35,7 @@ class Net(nn.Module):
 
 class Scaler(CV):
     def __init__(self, preprocessor, batch_size=1024):
-        super(CV, self).__init__()
+        super(Scaler, self).__init__()
         self.df = preprocessor.df
         self.train_idx = preprocessor.train_idx
         self.batch_size = batch_size
@@ -82,7 +82,7 @@ class Scaler(CV):
 
 class NetTrainer(Trainer):
     def __init__(self, trainloader, testloader, scaler=None, net_config=None, lr=0):
-        super(Trainer, self).__init__()
+        super(NetTrainer, self).__init__()
 
         self.scaler = scaler
         self.trainloader = trainloader

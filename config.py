@@ -36,7 +36,22 @@ models_config = {
                 },
                 'lr': 0.001,
             },
-        'train_config': {'n_epochs': 10},
+        'train_config': {'n_epochs': 1},
+    },
+    'cb': {
+        'init_config':
+            {
+                'model_config': {
+                    'iterations': 100,
+                    'learning_rate': 1,
+                    'depth': 20,
+                    'task_type': 'GPU',
+                    'devices': '1',
+                    'random_seed': 42,
+                    'use_best_model': True,
+                }
+            },
+        'train_config': {}
     }
 }
 

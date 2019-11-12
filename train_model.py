@@ -6,8 +6,9 @@ from datetime import datetime
 from config import models_config, DIR
 from data_preprocessing_utils import Preprocessor
 from nn import *
+from boosting import *
 
-MODEL_TYPE = 'nn'
+MODEL_TYPE = 'cb'
 PREPROCESSORS = ['models/preprocessor_3']  # must be "models/preprocessor_%d"
 
 if __name__ == '__main__':
@@ -24,6 +25,9 @@ if __name__ == '__main__':
             cv = Scaler(preprocessor)
             init_config['scaler'] = cv
             TrainClass = NetTrainer
+        elif MODEL_TYPE == 'cb':
+            cv = CatBoostCV(preprocessor)
+            TrainClass = CatBoostTrainer
 
         i_group = 0
         for trainloader, testloader in cv.iter_cv():
